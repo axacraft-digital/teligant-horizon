@@ -1,25 +1,28 @@
-# teligant-headless-storefront
+# teligant-horizon
 
-The reusable telehealth marketing and commerce frontend kit. A code implementation of the Lattice design system, extended with telehealth-specific archetypes, typed to consume `teligant-headless` v1.
+Storefront code foundation for intelligent custom telehealth storefronts.
 
-Each customer engagement instantiates this kit with a customer-specific Lattice skin and deploys to customer-owned infrastructure. The kit is internal IP; the deliverable is bespoke.
+This repo is the governed starting point for customer-owned storefront projects that integrate with `teligant-headless`. It provides the reusable frontend foundation: Lattice-based design primitives, telehealth storefront archetypes, typed adapters, reference composition, and customer-instantiation guidance.
+
+Think of it as the base theme/foundation Teligant starts from when building a bespoke storefront for a customer. The customer owns the brand, content, domain, deployment, analytics, pricing presentation, and checkout surface. Teligant owns the regulated workflow behind the API seam: intake, care requests, provider review, status contracts, webhooks, audit, and admin/provider operations.
 
 ## Status
 
-**Pre-Chapter 0.** Empty scaffold. Architecture decisions not yet made. Do not start writing application code until the Chapter 0 decision document lands.
+Foundation reset in progress. This repo is being redefined around the Teligant storefront delivery model and should not inherit old commerce-platform assumptions.
 
 ## Start Here
 
-1. [`CLAUDE.md`](./CLAUDE.md) — operational notes for anyone (human or agent) working in this repo.
-2. [`docs/roadmap.md`](./docs/roadmap.md) — the attack plan: four parts, twelve chapters, pacing against the first customer (Hedfirst) timeline.
+1. [`AGENTS.md`](./AGENTS.md) — repo purpose, scope, and agent rules.
+2. [`CLAUDE.md`](./CLAUDE.md) — operational notes for Claude Code and other agents.
+3. [`docs/roadmap.md`](./docs/roadmap.md) — roadmap for the storefront foundation.
+4. [`docs/chapter-0-architecture-decisions.md`](./docs/chapter-0-architecture-decisions.md) — architecture decision registry.
 
-## Strategic Context (Lives Elsewhere)
+## Strategic Context
 
-The business positioning and delivery model for this repo live in `teligant-headless/docs/product-vision/`:
+The storefront delivery model is described in:
 
-- `telehealth-storefront-delivery-ambition.md` — why this kit exists
-- `customer-storefront-delivery-model.md` — how a customer engagement runs
+- `/Users/kellysmith/Projects/teligant-headless/docs/explainers/two-integration-scenarios.md`
+- `/Users/kellysmith/Projects/teligant-headless/docs/product/product-contract.md`
+- `/Users/kellysmith/Projects/teligant-headless/docs/product/commerce-orchestration-authority.md`
 
-The governance discipline is `teligant-headless/docs/process/systems-approach.md`.
-
-The design language this kit implements is the Lattice design system, canonical at `/Users/kellysmith/Projects/lattice-design-system/`, mirrored in `teligant-headless/docs/design-system/`.
+The design language this foundation implements is the Lattice design system, canonical at `/Users/kellysmith/Projects/lattice-design-system/`.

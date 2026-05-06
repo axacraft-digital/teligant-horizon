@@ -1,357 +1,334 @@
-# Storefront Kit Roadmap
+# Teligant Horizon Roadmap
 
-**Status:** Planning Draft
-**Doc Class:** Planning Document
-**Scope:** The attack plan for building `teligant-headless-storefront` from empty scaffold to first customer launch (Hedfirst) and beyond
-**Canonical Authority:** Not implementation authority — a planning artifact that frames the work
-**Created:** 2026-04-17
+**Status:** Planning Draft  
+**Doc Class:** Planning Document  
+**Scope:** Roadmap for turning `teligant-horizon` into the storefront code foundation for customer-owned Teligant storefronts  
+**Canonical Authority:** Not implementation authority — a planning artifact that frames the work  
+**Created:** 2026-04-17  
+**Reset:** 2026-05-06  
 
 ## Purpose
 
-This document is the single-page attack plan for this repository. It answers:
+This document is the attack plan for the storefront foundation. It answers:
 
-- what this kit needs to become
-- in what order
-- at what pace given the first customer timeline
-- and what meta-questions will quietly determine whether it succeeds
+- what this foundation needs to become
+- what gets built in what order
+- which decisions must be locked before code lands
+- how the foundation produces bespoke customer storefronts without becoming a hosted storefront product
 
-It is a **living** document. Edit it as the work lands. When a chapter is complete, mark it complete. When a decision is made, link the decision doc. When the plan changes, update it here rather than carrying tribal knowledge.
+This is a living document. Update it as chapters land, decisions change, or the Headless authority stack moves.
 
-## What The Kit Is
+## What Horizon Is
 
-The storefront kit is **an implementation of Lattice, specialized for telehealth commerce, plus a customer-instantiation mechanism**.
+Horizon is **Lattice-in-code + telehealth storefront archetypes + typed Teligant adapters + a customer-instantiation mechanism**.
 
-Everything downstream follows from that definition. If any proposed work doesn't advance one of those three things (Lattice-in-code, telehealth specialization, or customer instantiation), it probably doesn't belong here.
+Everything downstream follows from that definition. If proposed work does not advance one of those four things, it probably does not belong here.
+
+Horizon exists for Scenario 2 in the integration explainer: Teligant scaffolding for a customer-owned storefront. It should also produce clean adapter examples that help Scenario 1 BYO storefront customers integrate with Teligant without adopting the full foundation.
+
+## What Horizon Is Not
+
+- not a hosted storefront builder
+- not a CMS
+- not a page-builder
+- not an admin surface
+- not a regulated workflow runtime
+- not a payment processor abstraction
+- not a pharmacy fulfillment system
+- not a broad customer portal
 
 ## Structure: Four Parts, Twelve Chapters
 
-Work is organized in four mental **parts**, each containing several **chapters**. Parts are categories; chapters are the actual scoped work.
+Work is organized in four parts. Parts are conceptual; chapters are the scoped execution units.
 
 ---
 
-## Part I: Foundations (Brand-Neutral, Reusable Forever)
+## Part I: Foundations
 
-The kit's spine. Every customer forever inherits this layer. Changes here are high-leverage and high-risk.
+Brand-neutral, reusable, inherited by every customer storefront.
 
 ### Ch 0 — Architecture Decisions
 
-**Status:** Pending. No code until this lands.
+**Status:** Reset required.
 
-The most important chapter and the one most easily skipped. Decides the stack before any keystroke commits the repo to a posture.
+Chapter 0 decides the stack before code commits the repo to a posture.
 
 **Decisions to lock:**
 
-- **Framework.** Next.js 16 is the likely answer (same DNA as `teligant-headless`). Alternatives: Astro (for static marketing sites), Remix, or a bespoke Vite + React setup. The choice has downstream implications for SSR, static export, bundle size, deployment targets.
-- **Repo shape.** Monorepo with `packages/kit` + `apps/reference` + `apps/starter`, or single-app scaffold? Recommendation: monorepo — one place for kit code, one place to demo the kit, one place as the per-customer starter template.
-- **Styling model.** CSS custom properties + Tailwind v4? Pure CSS modules? Vanilla CSS with PostCSS tooling? The decision affects how Lattice tokens are expressed and consumed.
-- **Customer instantiation mechanism.** Fork-the-starter-repo, `npx create-teligant-storefront` generator, or package-consumer-with-customer-downstream-repo? Each has real implications for how skin updates and kit updates flow.
-- **Adapter strategy.** Typed SDK generated from headless OpenAPI, or hand-written typed clients? Hand-written is faster now; generated scales better.
-- **Testing strategy.** Visual regression? Component unit tests? End-to-end? What's the discipline for archetype changes?
-- **Governance model.** Who owns adding a new archetype? Who owns a token ladder change? How does a customer-specific extension get considered for upstream inclusion?
-- **Deployment model.** Vercel, Cloudflare, Netlify, self-hosted? Should the kit be deployment-target-agnostic, or optimized for one?
-- **Analytics posture.** The kit's opinion on GA, Mixpanel, Segment, consent, and whether the kit ships with hooks or is bring-your-own.
+- Framework and runtime posture.
+- Repo shape.
+- Styling model.
+- Customer instantiation mechanism.
+- Adapter strategy for Teligant Headless.
+- Testing strategy.
+- Governance model.
+- Deployment model.
+- Analytics and consent posture.
+- Content model.
+- Package / release strategy.
 
-**Deliverable:** `docs/chapter-0-architecture-decisions.md` — a single document that records each decision, the alternatives considered, and the reasoning. The decisions don't need to be perfect. They need to be made, documented, and stable.
+**Deliverable:** `docs/chapter-0-architecture-decisions.md`.
 
 ### Ch 1 — Scaffold + Charter
 
-Create the repo skeleton. Write the project charter per `systems-approach.md` §8.1.
+Create the repo skeleton from Chapter 0 decisions.
 
 **Scope:**
-- scaffold per Chapter 0 stack choices
-- charter doc (what this is, voice, rules, stack, architecture, known gotchas, commands, out-of-scope)
-- contributing guide skeleton (even if thin on day one)
-- CI basics (type-check, lint, format-check)
-- `.gitignore`, lockfile, `.nvmrc`, editor config
-- placeholder test harness so CI has something to run
 
-**Exit criteria:** a fresh clone builds, types check, lints clean, and CI is green on an empty repo.
+- workspace scaffold
+- package/app boundaries
+- README / AGENTS / CLAUDE alignment
+- `.gitignore`, lockfile, runtime config, editor config
+- type-check, lint, test, and build commands
+- baseline CI if a remote exists
+- no customer-specific implementation
 
-### Ch 2 — Port Lattice Foundations To Code
+**Exit criteria:** fresh clone installs, builds, type-checks, lints, and runs a minimal reference app.
 
-The pure foundational layer. Turns Lattice spec into CSS/tokens/utilities. Brand-neutral.
+### Ch 2 — Lattice Foundations In Code
 
-**Scope (per Lattice files):**
-- Typography — three-voice type system, fluid scale, semantic/visual decoupling as CSS variables and utility classes
-- Spacing — behavioral layers (optical, component, layout) as named variables
-- Grid — compositional field model, frame modes, allocation archetypes as layout components
-- Color — OKLCH primitives, semantic UI tokens, runtime variable logic
-- Density — compact, default, relaxed as context-level variables
-- Surfaces — page planes, raised layers, muted, dark, overlay logic
-- States — disabled, selected, loading, focus, scrim, selection
-- Motion — feedback, state change, entrance rules
-
-**Not in scope here:** components, archetypes, customer skins.
-
-**Exit criteria:** a reference HTML file (not a React page — just HTML) renders every Lattice foundation correctly against the defaults. Every Lattice rule expressible in CSS is expressed.
-
-### Ch 3 — Port Lattice Primitives
-
-The applied-system layer. Still brand-neutral.
+Turn Lattice's foundational rules into code.
 
 **Scope:**
-- Prose container — long-form content wrapper with reading measure, list behavior, inline links
-- Buttons — governed roles, shared control size axis, all required states
-- Forms — inputs, labels, fields, validation states aligned to buttons and type roles
-- Badges — compact label and tag primitives
-- Links — inline, standalone, navigational, inverse families
 
-**Exit criteria:** every Lattice primitive has a component, typed props that match Lattice's editability contracts, and passes accessibility and state coverage.
+- typography system
+- spacing ladder
+- grid / layout primitives
+- color and semantic tokens
+- density
+- surfaces
+- state tokens
+- motion rules
+- skin override mechanism
 
-### Ch 4 — Port Lattice Section Archetypes
+**Exit criteria:** a reference page renders Lattice foundations and can swap between at least two fake skins without component rewrites.
 
-All ten Lattice section archetypes as composable layout components.
+### Ch 3 — Lattice Primitives
+
+Implement brand-neutral primitives.
 
 **Scope:**
-1. Hero Statement
-2. Trust Strip
-3. Section Intro
-4. Science Split
-5. Ingredient Grid
-6. Proof / Stat Band
-7. Testimonial Proof
-8. Editorial / Manifesto
-9. Conversion CTA
-10. FAQ / Disclosure
 
-Each takes content props and renders following Lattice's rules. Merchant-editable surfaces are editable via props; design-system decisions are locked.
+- buttons
+- links
+- badges
+- cards / surface wrappers where authorized by Lattice
+- form fields
+- disclosure / accordion primitives
+- content containers
+- navigation primitives
 
-**Exit criteria:** a test page composes all ten archetypes with placeholder content and visually expresses Lattice's intended character.
+**Exit criteria:** primitives have typed props, accessibility coverage, responsive behavior, and visual states.
+
+### Ch 4 — Lattice Section Archetypes
+
+Implement reusable Lattice section archetypes as composable storefront sections.
+
+**Scope:**
+
+- hero / statement sections
+- trust strips
+- section intros
+- science / education splits
+- ingredient or benefit grids
+- proof / stat bands
+- testimonial proof
+- editorial / manifesto sections
+- conversion CTAs
+- FAQ / disclosure sections
+
+**Exit criteria:** the reference storefront can compose the full Lattice section set with placeholder content.
 
 ---
 
-## Part II: Telehealth Specialization (Reusable Across Telehealth Customers)
+## Part II: Telehealth Storefront Specialization
 
-The things Lattice doesn't cover because Lattice is general-purpose. Authored once, reused across every telehealth customer forever.
+Reusable surfaces that Lattice does not cover by itself.
 
 ### Ch 5 — Telehealth Archetype Extensions
 
-Archetypes that inherit Lattice's foundational rules and add telehealth semantics. **Not a fork of Lattice. Extensions.**
+Telehealth-specific archetypes extend Lattice. They do not fork it.
 
 **Scope:**
-- PDP with Questionnaire Gateway — product detail page that terminates at an intake-session start rather than add-to-cart
-- Program / Category Grid — launch-category navigation (weight loss, ED, hair loss, HRT, skincare, peptides)
-- Eligibility / State Gate — 50-state licensing, age, and condition pre-qualification
-- Pharmacy and Compliance Disclosure — regulated-product disclosure surface distinct from FAQ
-- How It Works Explainer — linear process explanation (browse → questionnaire → review → prescription → fulfillment)
 
-**Deliverable:** a new `telehealth-archetypes.md` in the kit's docs that formalizes these archetypes in the same structure Lattice uses for its ten. This document may graduate upstream to Lattice as a telehealth supplement.
+- Program / category grid.
+- Treatment or product detail page.
+- Questionnaire gateway.
+- Eligibility / state gate.
+- Pharmacy and compliance disclosure.
+- How-it-works flow.
+- Clinician / provider trust section.
+- Safety and contraindication disclosure section.
 
-**Exit criteria:** telehealth archetypes compose with Lattice archetypes on a test page without visual dissonance or rule violations.
+**Exit criteria:** telehealth archetypes compose with Lattice archetypes without design drift and clearly terminate at the Teligant API / hosted-intake seam.
 
-### Ch 6 — Typed Adapters (Two Backends) + `@teligant/medusa-extensions`
+### Ch 6 — Typed Teligant Adapters
 
-The seam between the kit and its two backends. Typed, mockable, honest about what's shipped and what's not. Scope reshaped under D11 (commerce backend = Medusa 2.x, RECOMMENDED): the kit's adapter surface now targets two backends, and a new kit-side workspace package carries the regulated-workflow glue that lives in Medusa's extension points.
+The seam between customer storefronts and `teligant-headless`.
 
-**Scope (commerce — Medusa, real day one):**
-- Generated SDK from Medusa's published OpenAPI spec (e.g., `openapi-typescript` or `orval` against Medusa's OpenAPI). Types regenerated on every build.
-- Covers catalog, cart, checkout, pricing, tax, shipping, orders, fulfillment, promotions, returns.
+**Scope:**
 
-**Scope (clinical — Teligant, real where tranched, mock otherwise):**
-- Hand-authored typed modules, one per surface. Mock variants live alongside and are selected via a configurable client.
-- Real adapters (shipped headless surfaces): intake session (`POST /v1/intake-sessions`, `GET /s/[session_id]`, `POST /s/[session_id]/complete`), care request status (`GET /v1/care-requests/{id}/status`, `GET /v1/care-requests/status?external_ref=`).
-- Mock adapters (un-tranched): patient auth (gating the Medusa custom auth provider — see extensions package below), any additional clinical surfaces Teligant roadmap reveals.
-- When a real tranche lands, the mock is retired and the real adapter is wired without re-implementing the consuming component.
+- typed adapter client for shipped Headless API surfaces
+- mock adapters for planned Headless surfaces
+- adapter configuration per tenant/customer project
+- error envelope normalization
+- idempotency-key support where relevant
+- server-only credential handling
+- non-PHI event and status display helpers
 
-**Scope (new workspace package — `@teligant/medusa-extensions`):**
+**Initial adapter candidates:**
 
-The Medusa extension points the kit owns and ships with customer deployments. Installed into each customer's Medusa instance during build phase.
+- intake-session creation
+- hosted-intake handoff URL handling
+- care-request status lookup where authorized
+- Branch A commerce handoff when packetized
+- payment-attestation / capture-eligibility helpers when packetized
+- webhook event display examples for customer-owned status surfaces
 
-- **Custom auth provider** — extends `AbstractAuthModuleProvider`; validates credentials / tokens against Teligant's patient-auth API; creates or updates a Medusa `AuthIdentity` with `entity_id = teligant_user_id`.
-- **Custom pharmacy fulfillment provider** — extends `AbstractFulfillmentProviderService`; routes regulated-SKU line items (pharmacy shipping profile) to Teligant's pharmacy integration; webhook-completes back to Medusa.
-- **Regulated-approval workflow** — Medusa 2.x long-running workflow using the `async: true` step pattern. Two variants: **Shape A fast-path** (approval already in hand from intake; verify currency + release fulfillment) and **Shape B capture-gated** (wait for approval, then `capturePaymentWorkflow.runAsStep` → `createOrderFulfillmentWorkflow`). Compensation on denial cancels the order and clears the auth.
-- **Teligant approval webhook handler** — Medusa API route that resumes the approval workflow via `setStepSuccess` / `setStepFailure` keyed to the transaction ID stored in `order.metadata`.
-- **Shipping-profile configuration helpers** — pharmacy profile vs. standard profile scaffolding.
-- **Shape A / Shape B orchestration presets** — Stripe `capture_method: manual` configuration toggle, mixed-cart partial-capture helpers.
-
-**Exit criteria:** the reference site (Chapter 7) runs end-to-end against a local Medusa instance with the extensions package installed, plus real intake-session / care-request adapters against Teligant (real where tranched, mocked otherwise). Both commerce-flow shapes (A intake-first and B checkout-first-with-auth-before-capture) exercised on the reference surface.
-
-**Dependencies:** flips live when D11 and D05 flip to DECIDED (after the two gates named in D11: Teligant patient-auth audit + Stripe manual-capture prototype). Direction-agnostic scaffolding can begin earlier; adapter authoring waits on the flip.
+**Exit criteria:** the reference storefront can start a Teligant intake flow against real shipped endpoints and can exercise planned endpoints through clearly labeled mocks.
 
 ---
 
-## Part III: Customer Instantiation (The "Running Head Start" Mechanism)
+## Part III: Customer Instantiation
 
-The part that turns the kit from "a thing that renders one demo site" into "a thing that produces bespoke customer websites at a pace that makes the business model work."
+The machinery that turns the foundation into repeatable customer delivery.
 
-### Ch 7 — Reference Surface
+### Ch 7 — Reference Storefront
 
-The canonical reference implementation. Not a real customer — a brand-neutral or fictional telehealth brand that exercises every archetype end-to-end.
+The canonical non-customer implementation.
 
 **Surfaces:**
-- Homepage (Hero + Trust + Program Grid + Science Split + Proof + Testimonial + Conversion CTA)
-- Category / Program page (Program Intro + Product Grid + CTA)
-- PDP (Hero + Science Split + Ingredient Grid + Testimonial + PDP Questionnaire Gateway)
-- How It Works page
-- FAQ page
-- About / Editorial page
-- Questionnaire flow (real intake-session wiring)
-- Status / Care Request polling page
+
+- homepage
+- program/category page
+- treatment/product detail page
+- how-it-works page
+- FAQ/disclosure page
+- questionnaire gateway
+- post-handoff status affordance where authorized
 
 **Purpose:**
-- proves the kit works as a cohesive whole
-- serves as the "canonical reference implementation" per `systems-approach.md` §4
-- becomes the demo artifact for prospects before a customer skin exists
-- becomes the comparison surface for future customer instances (if a customer surface diverges from the reference without reason, it's drift)
 
-**Exit criteria:** deployed to an internal preview environment, exercises every archetype, passes accessibility and performance budgets.
+- proves the foundation works as a cohesive whole
+- demonstrates Lattice + telehealth archetypes
+- gives prospects a previewable artifact
+- gives downstream customer projects a comparison target
 
-### Ch 8 — Customer Instantiation Model Built And Proven
+**Exit criteria:** deployed to an internal preview environment with accessibility and performance budgets.
 
-Chapter 0 picked an instantiation mechanism (fork, generator, or package-consumer). This chapter builds it and proves it.
+### Ch 8 — Customer Skin + Content Model
+
+Prove the foundation can become a different storefront without code drift.
 
 **Scope:**
-- whatever tooling the chosen mechanism requires
-- a second, fake brand instantiated from the kit (tokens only, not a full engagement) — to prove the mechanism produces a different-looking site without kit code drift
-- clear documentation of the instantiation steps
 
-**Exit criteria:** a non-kit-author can take the reference surface, clone it into a new brand, change tokens, change copy, and deploy — following only the documented runbook.
+- skin file format
+- token override rules
+- content object model
+- imagery / asset conventions
+- voice and copy slots
+- route / page composition config
+- fake second brand proof
+
+**Exit criteria:** a fake brand produces a materially different storefront by changing skin/content/config, not foundation code.
 
 ### Ch 9 — Customer Onboarding Runbook
 
-A document that describes the exact steps to onboard a new customer, from design phase output to deployed site.
+The repeatable delivery playbook.
 
 **Scope:**
-- how the design phase's Lattice skin spec maps to token installation
-- how archetype selection happens per customer
-- how content is populated
-- how real adapters get wired as headless tranches land
-- what customer-owned repo vs. customer-owned deployment looks like
-- what gets handed over to the customer vs. stays internal
+
+- how discovery/design artifacts become a Lattice skin
+- how page/archetype selection happens
+- how content is installed
+- how adapters are configured
+- how customer-owned deployment is prepared
+- what is handed over to the customer
+- what stays internal
 - support obligations and scope boundaries
 
-**Scope addition under D11 = Medusa (RECOMMENDED):**
-- **Per-customer Medusa instance provisioning.** Infrastructure shape (HIPAA-eligible self-host presumed), database + Redis setup, Stripe Connect wiring (including Shape A auto-capture vs. Shape B `capture_method: manual` per product line), shipping-profile setup (pharmacy vs. standard).
-- **`@teligant/medusa-extensions` installation and configuration** into the customer's Medusa instance — custom auth provider pointed at the customer's Teligant tenant, custom pharmacy fulfillment provider pointed at their pharmacy integration, regulated-approval workflow and webhook handler wired.
-- **Per-customer catalog configuration** — products, variants, shipping-profile assignment for regulated SKUs, pricing / tax / region configuration.
-- **Customer admin handover** — Medusa admin plus Teligant admin; ops staff onboarding across the two UIs.
-
-This is the playbook a delivery person (Dasha, a contractor, or a future hire) follows. Without it, the kit's leverage exists only in the head of the kit author. The Medusa provisioning path is the new repeatable primitive that sharpens the Ch 12 "running head start" claim.
-
-**Exit criteria:** another person can onboard a fake customer (including standing up a Medusa instance with extensions installed and configured) by following only this doc, without needing to ask the kit author for clarification.
+**Exit criteria:** another person can instantiate a fake customer storefront by following only the runbook.
 
 ---
 
-## Part IV: First Customer And Iteration
+## Part IV: First Customer And Hardening
 
-### Ch 10 — Hedfirst Instance
+### Ch 10 — First Customer Storefront
 
-The first real application of the kit. Apply the Hedfirst skin. Configure Hedfirst-specific content and archetype selection. Wire real adapters as headless tranches land. Launch.
-
-**Scope:**
-- Hedfirst token set applied
-- Hedfirst content populated across launch pages
-- category structure configured per Hedfirst's launch decisions
-- any customer-specific archetype extensions scoped and delivered
-- production deployment to Hedfirst-owned infrastructure (`app.hedfirst.com`)
-- launch readiness per the `customer-storefront-delivery-model.md` build phase
-
-**Scope addition under D11 = Medusa (RECOMMENDED):**
-- Hedfirst Medusa instance provisioned on HIPAA-eligible self-host infrastructure alongside Hedfirst's Teligant tenant
-- `@teligant/medusa-extensions` installed and configured against Hedfirst's Teligant patient-auth surface and pharmacy integration
-- Hedfirst catalog configured — products, variants, shipping profiles (pharmacy vs. standard) per Hedfirst's product mix
-- Shape A / Shape B flow assignment per Hedfirst product line (intake-first for Rx, checkout-first-with-auth-before-capture where applicable)
-
-**Exit criteria:** Hedfirst's launch goes live. End-to-end flow operates against real `teligant-headless` v1 and the Hedfirst Medusa instance. Launch stabilization period begins.
-
-### Ch 11 — Kit Hardening From Hedfirst Learnings
-
-The first real engagement always reveals things the kit got wrong. This chapter feeds those learnings back into the kit via migration docs per `systems-approach.md`.
+Apply the foundation to the first real customer.
 
 **Scope:**
-- archetype refinements where Hedfirst needed something the kit didn't express cleanly
-- adapter ergonomics where the real integration revealed friction
-- documentation gaps revealed when other people touched the kit
-- performance or accessibility gaps revealed under real traffic and real audit
-- instantiation mechanism weaknesses revealed when taking Hedfirst from reference to production
 
-**Scope addition under D11 = Medusa (RECOMMENDED):**
-- **Medusa major-upgrade governance.** Minor version churn is insulated by the adapter layer; major versions require re-testing `@teligant/medusa-extensions` (custom providers and workflows) against the new Medusa release. Surface each Medusa major as a migration doc per `systems-approach.md`. Add a regression pass (custom auth provider, pharmacy fulfillment provider, regulated-approval workflow, Shape A/B capture flows) to the kit hardening checklist.
-- **Extension-package ergonomics from real customer deployment** — friction in provisioning, configuring, and debugging the extensions package against a real Medusa instance.
+- customer skin
+- customer content
+- customer page composition
+- adapter configuration
+- production deployment to customer-owned infrastructure
+- launch readiness checklist
 
-**Exit criteria:** every Hedfirst-driven kit improvement is captured in a migration doc, addressed, and closed. The kit is materially better after Hedfirst than before.
+**Exit criteria:** first customer storefront launches against real Teligant Headless v1 surfaces for the authorized workflow.
+
+### Ch 11 — Foundation Hardening
+
+Feed first-customer learning back into the foundation.
+
+**Scope:**
+
+- archetype refinements
+- adapter ergonomics
+- documentation gaps
+- accessibility and performance gaps
+- instantiation runbook corrections
+- migration notes for breaking changes
+
+**Exit criteria:** first-customer-driven improvements are captured, generalized where appropriate, and closed without baking customer-specific assumptions into the foundation.
 
 ### Ch 12 — Second Customer
 
-The real test of the "running head start" claim. Onboard customer #2.
+The proof that the foundation creates leverage.
 
-If customer #2 is materially faster and cleaner to onboard than Hedfirst was, the kit has productized the work.
-
-If customer #2 takes as long as Hedfirst did, the kit did not productize anything and the investment model needs to be re-examined.
-
-This is a measurement chapter, not a scope chapter. The specific second customer depends on pipeline.
+**Exit criteria:** second customer delivery is materially faster and cleaner than the first. If it is not, the foundation failed to productize the work and the model needs revision.
 
 ---
 
-## Pacing Against The Hedfirst Timeline
+## Cross-Cutting Decisions
 
-The 12-week pacing structure below is aspirational and chapter-anchored. The Hedfirst-specific launch date is the forcing function; re-anchor the week numbers against it as the Hedfirst launch timeline firms up.
-
-| Period | Approximate Weeks | Scope |
-|--------|-------------------|-------|
-| **Foundations** | Week 1-2 | Ch 0 locked. Ch 1 scaffold complete. Ch 2 Lattice foundations in code. Start Ch 3, build 2-3 archetypes from Ch 4 (Hero, Science Split, Conversion CTA) on a brand-neutral skin. Goal: a living aesthetic demo that proves the bones work, ready for Hedfirst skin integration. |
-| **Archetypes + adapter kickoff** | Week 3-4 | Finish Ch 3 (primitives). Finish Ch 4 (all 10 Lattice archetypes). Start Ch 5 (telehealth archetypes). Start Ch 6 (adapters — two-backend surface against a local Medusa instance + real Teligant intake-session wiring). |
-| **Hedfirst build phase** | Week 5-8 | Finish Ch 5, Ch 6 (including `@teligant/medusa-extensions` package). Complete Ch 7 (reference surface). Ch 8 (instantiation mechanism built and proven). Ch 9 (onboarding runbook). Start Ch 10 (Hedfirst skin applied; Hedfirst Medusa instance provisioned). |
-| **Hedfirst launch + stabilize** | Week 9-12 | Finish Ch 10. Ch 11 hardening from launch learnings. |
-| **Customer #2** | Week 12+ | Ch 12 tests whether the leverage is real. |
-
-This pacing is aggressive but achievable if Ch 0 decisions are clean and don't get re-litigated mid-build. Most kit projects fail not because any individual chapter is hard but because Chapter 0 decisions drift and every downstream chapter pays the cost of the indecision.
-
-## Three Meta-Questions Above The Chapters
-
-Three questions that the chapters don't answer on their own but will quietly determine whether the kit succeeds:
-
-### 1. Who is the "one team" that builds both halves?
-
-Today: Kelly + agents + Dasha. As deals grow, does it stay in-house, scale through contractors, or require hires? The kit's design choices — ergonomics, docs quality, instantiation model, onboarding runbook depth — should assume **someone who isn't Kelly** will be onboarding customer #3. If the kit requires the author to succeed, it hasn't productized anything.
-
-### 2. What is the upgrade path when Lattice or the kit changes?
-
-Lattice will evolve. The kit will evolve. How do previously-deployed customer sites receive updates? Never (locked at deploy time)? On request (customer pays for updates)? Automatically via package version bumps (customer is on a support plan)? This is a downstream commercial question, but the architecture has to allow whatever answer gets chosen. Best decided early.
-
-### 3. What's the kit's opinion on things Lattice doesn't cover?
-
-Lattice (correctly) does not address:
-- SEO structure and conventions
-- Accessibility audit bar and compliance posture
-- Performance budgets and Core Web Vitals
-- Image CDN strategy
-- Analytics integration and consent
-- Consent banners and privacy UX
-- Email marketing integration
-- A/B testing infrastructure
-
-These are real telehealth commerce concerns. The kit needs opinions on them or it won't feel world-class. Worth authoring early as part of the charter rather than discovering under customer-delivery pressure.
+| Decision | Current posture | Blocks |
+|----------|-----------------|--------|
+| Framework | Pending reset | Ch 1 |
+| Repo shape | Monorepo likely; confirm in Ch 0 | Ch 1 |
+| Styling model | Lattice tokens + CSS variables required; implementation choice pending | Ch 1 / Ch 2 |
+| Adapter strategy | Typed Teligant adapters; no external commerce backend assumption | Ch 6 |
+| Testing strategy | Pending | Ch 1 |
+| Customer instantiation mechanism | Package or starter-template shape pending reset | Ch 8 / Ch 9 |
+| Analytics / consent | Pending | Ch 7 |
+| Content model | Pending | Ch 7 / Ch 8 |
 
 ---
 
-## Open Decisions Tracker
+## Sequencing Recommendation
 
-Maintain a simple list of decisions needed but not yet made. Each row links to the chapter or doc that will resolve it.
+1. Reset Chapter 0 and remove stale architecture assumptions.
+2. Scaffold the smallest working foundation.
+3. Implement Lattice foundations and primitives.
+4. Build telehealth archetypes around the customer-to-Teligant seam.
+5. Add typed Teligant adapters and mock planned surfaces.
+6. Build the reference storefront.
+7. Prove skin/content instantiation with a fake brand.
+8. Write the customer onboarding runbook.
+9. Launch the first customer storefront.
+10. Harden the foundation from real delivery.
 
-| Decision | Status | Blocks | Resolution Doc |
-|----------|--------|--------|----------------|
-| Framework | Implied (Next.js 16) | Ch 1 onward | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D01 |
-| Repo shape | **Decided** | Ch 1 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D02 |
-| Styling model | Implied (Tailwind 4 + CSS custom properties) | Ch 2 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D03 |
-| Customer instantiation mechanism | **Decided** (Shape 2: separate customer repos consume kit package) | Ch 8 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D04 |
-| Adapter strategy | **Recommended** (two-backend: generated for Medusa, hand-authored for Teligant) | Ch 6 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D05 |
-| Testing strategy | Pending | Ch 1 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D06 |
-| Governance model for archetype/ladder changes | **Decided** | Always | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D07 |
-| Deployment model | Implied (Vercel) | Ch 7 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D08 |
-| Analytics posture | Pending | Meta-question 3 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D09 |
-| Upgrade path for deployed sites | **Decided** (opt-in semver package upgrades) | Meta-question 2 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D10 |
-| Commerce backend source | **Recommended** (Medusa 2.x; gated on Teligant patient-auth audit + Stripe manual-capture prototype) | Ch 5, Ch 6, D05 | [`chapter-0-architecture-decisions.md`](./chapter-0-architecture-decisions.md) D11; [`evaluations/commerce-backend-medusa.md`](./evaluations/commerce-backend-medusa.md) |
+## Stop Conditions
 
----
+Stop if roadmap work drifts toward:
 
-## What This Document Is Not
-
-This is not:
-
-- implementation authority (it describes shape, not contracts)
-- a project management plan (the pacing is a framework, not a schedule)
-- a commercial commitment (no pricing, no customer commitments)
-- a locked sequence (chapters can re-order if evidence justifies; surface the change, don't drift)
-
-It is the **thinking framework** for the kit. Edit it as the work lands. When it's wrong, fix it in place rather than carrying stale context.
+- a hosted storefront builder
+- a customer-editable page-builder
+- regulated workflow in storefront code
+- PHI in storefront state
+- raw card data handling
+- external API contracts invented locally
+- customer-specific code in reusable foundation packages
+- Branch B checkout implementation without authority
+- Lattice token or archetype changes without design authority
