@@ -23,6 +23,17 @@ This repo is being reset from an earlier commerce-platform investigation into th
 
 Do not assume any old commerce-backend direction still applies. The storefront should integrate directly with `teligant-headless` through typed adapters and keep customer-owned commerce / checkout responsibilities on the customer side of the seam unless a specific customer project is separately authorized for a different posture.
 
+## Where To Find Current State
+
+This file is an operational rulebook, not a status ledger. For the current state of decisions, scope, and in-flight work — read these instead:
+
+- `docs/chapter-0-architecture-decisions.md` — Chapter 0 decision registry. Only entries marked `DECIDED` are implementation authority. `RECOMMENDED` is direction. `PENDING` blocks dependent code. `SUPERSEDED` must not be revived without a new decision.
+- `docs/chapter-0-lock-in-recommendations.md` — current CTO-office recommendation memo for the open Chapter 0 entries. Not authority on its own; becomes authority only when copied into the registry as `DECIDED`.
+- `docs/roadmap.md` — chapter-by-chapter planning artifact. Not implementation authority; if it disagrees with a Chapter 0 entry, the Chapter 0 entry wins.
+- `git log` / `git status` — authoritative for what is on `main` and what is in-flight.
+
+If specific dates, commit SHAs, or "as of" anchors appear in this file, treat them as stale — that content belongs in the registry, the roadmap, or git history, not here.
+
 ## Relationship To Other Repos
 
 | Repo | Role | Path |
@@ -64,56 +75,50 @@ If a request requires deciding product behavior, schema shape, patient auth post
 
 ## Hard Rules
 
-### Storefront Boundary
+`AGENTS.md` is the authority on storefront boundary, adapter discipline, Lattice discipline, customer-instantiation discipline, and commerce posture. Read `AGENTS.md` § Non-Negotiable Rules first. Do not duplicate those rules here — when they drift, the duplicated copy is the one that goes wrong. If this file conflicts with `AGENTS.md`, `AGENTS.md` wins.
 
-- Do not build a hosted storefront builder, CMS, merchant theme editor, or page-builder.
-- Do not build a generic e-commerce engine in this repo.
-- Do not move regulated workflow into the storefront.
-- Do not put PHI, clinical answers, provider notes, prescribing context, or audit-only data into storefront state.
-- Do not let a customer storefront authenticate as a patient to regulated Teligant surfaces unless the relevant patient-access authority has been locked.
+The rules below are operational hygiene that does not live in `AGENTS.md` — repo mechanics that an agent will hit before any product-boundary question comes up.
 
-### Adapter Discipline
+### Lockfile And Dependencies
 
-- Do not call `teligant-headless` directly from components. Calls go through typed adapters.
-- Do not fork backend contracts in storefront code. Adapter types reflect the current or explicitly planned Headless v1 API contract.
-- Do not ship a surface that depends on an unshipped backend capability without a mock adapter that matches the intended contract and labels the capability as planned.
-- Keep API keys and tenant credentials server-side. Never expose secrets in browser bundles.
-
-### Lattice Discipline
-
-- Do not invent local tokens when a Lattice token exists.
-- Do not bypass Lattice archetypes for new reusable sections.
-- Do not fork Lattice. Telehealth-specific archetypes extend the design system; they do not create a parallel design system.
-- Do not style from primitive colors when semantic tokens exist.
-
-### Customer Instantiation Discipline
-
-- Do not bake customer-specific logic into the foundation.
-- Customer skins, content, imagery, copy, routing choices, and deployment config belong in customer projects or clearly isolated examples.
-- Promote reusable patterns back into the foundation only when they are customer-neutral.
-- Preserve a clean upgrade path from the foundation to downstream customer storefronts.
-
-### Dependency Hygiene
-
+- Once `package-lock.json` exists, do not delete it. Lockfile churn breaks reproducible installs.
+- Do not delete `node_modules/` unless the lockfile is present and intact. If dependency recovery is needed, verify the lockfile first, then reinstall from it.
 - Do not add heavy client dependencies without a documented reason.
 - Do not add dependencies that make customer storefronts harder to deploy unless Chapter 0 authorizes the tradeoff.
-- Once a lockfile exists, do not delete it.
-- Do not commit secrets, `.env*` files, customer data, patient data, or real customer brand assets unless explicitly authorized and non-sensitive.
+
+### Secrets And Sensitive Data
+
+- Never print secrets in logs, errors, test output, docs, or commits.
+- Do not commit `.env*` files, API keys, tenant credentials, customer data, patient data, or real customer brand assets.
+- Keep server-only adapter credentials out of browser bundles. (This is repeated from `AGENTS.md` because the failure mode is silent and severe.)
+
+### Known Unknowns
+
+The following non-negotiables in `AGENTS.md` are not currently enforced by tooling — no scaffold, no lint, no CI, no test layer. They depend entirely on author + reviewer discipline until Chapter 1 lands enforcement:
+
+- adapter discipline (no direct `teligant-headless` calls from components, no contract drift)
+- mock-adapter labeling
+- Lattice token discipline (no raw values, no parallel design system)
+- customer-instantiation discipline (no customer-specific logic in foundation packages)
+
+When scaffold lands, enforcement should land with it. Until then, treat these as load-bearing reviewer obligations.
 
 ## Commands
 
-This repo may not have build, test, lint, or dev commands until the scaffold lands. When commands exist, list the smallest useful set here and keep them current.
+**There are no working commands yet.** This repo has no `package.json`, no lockfile, and no scaffold. Do not invent or run npm scripts. Chapter 1 (Scaffold + Charter) will land the first real commands.
 
-Expected future commands:
+When the scaffold lands, replace this section with the smallest useful set of commands that actually work, under the header "Commands that actually work" — and keep it current. Until then, this section exists to prevent agents from running commands that will fail.
 
-```bash
-npm install
-npm run dev
-npm run build
-npm run check-types
-npm run lint
-npm run test
-```
+Anticipated post-scaffold shape (for reference only — these do not exist yet and must not be run):
+
+- install, dev, build, type-check, lint, test
+- per-workspace variants once the monorepo lands
+
+## Gotchas Learned The Hard Way
+
+No incidents recorded yet — this repo is in foundation reset and has not accumulated operational scar tissue.
+
+When something burns a session (a wrong tool call, a silent failure, a non-obvious config trap, a git mistake), record it here in one or two lines. Be specific: name the file, the command, or the symptom. The Headless `CLAUDE.md` builds reliability this way; this section exists so Horizon can do the same intentionally rather than accidentally.
 
 ## Git Discipline
 
