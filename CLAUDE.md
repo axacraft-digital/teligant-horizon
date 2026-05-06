@@ -103,22 +103,41 @@ The following non-negotiables in `AGENTS.md` are not currently enforced by tooli
 
 When scaffold lands, enforcement should land with it. Until then, treat these as load-bearing reviewer obligations.
 
-## Commands
+## Commands That Actually Work
 
-**There are no working commands yet.** This repo has no `package.json`, no lockfile, and no scaffold. Do not invent or run npm scripts. Chapter 1 (Scaffold + Charter) will land the first real commands.
+```bash
+npm install                 # install all workspaces (root + apps/reference + packages/kit)
+npm run check-types         # tsc --noEmit across all workspaces (--if-present)
+npm run lint                # eslint . — including the kit discipline rules
+npm run test                # vitest run --passWithNoTests (jsdom + RTL)
+npm run build               # next build of apps/reference
+npm run dev                 # next dev of apps/reference on :3000
+npm run test:e2e            # placeholder — Playwright lands in Chapter 7
+npm run format              # prettier --write (respects .prettierignore)
+npm run format:check        # prettier --check
+```
 
-When the scaffold lands, replace this section with the smallest useful set of commands that actually work, under the header "Commands that actually work" — and keep it current. Until then, this section exists to prevent agents from running commands that will fail.
+Per-workspace `check-types` is also available:
 
-Anticipated post-scaffold shape (for reference only — these do not exist yet and must not be run):
+```bash
+npm run check-types -w @teligant/horizon-kit
+npm run check-types -w @teligant/horizon-reference
+```
 
-- install, dev, build, type-check, lint, test
-- per-workspace variants once the monorepo lands
+The kit discipline lint rules (Chapter 0 D01/D03/D08) live in `eslint.config.mjs` and enforce three things inside `packages/kit/src/**` (with a carve-out for `packages/kit/src/next/`):
+
+- no `next/*` imports
+- no `@vercel/*` imports
+- no raw color literals (hex, rgb, hsl, oklch) and no inline `style=` props
+
+If one of these rules fires, the fix is almost never `// eslint-disable` — it is to move the code, refactor to use Lattice tokens, or escalate via the CTO agent.
 
 ## Gotchas Learned The Hard Way
 
-No incidents recorded yet — this repo is in foundation reset and has not accumulated operational scar tissue.
+- **Vitest + React Testing Library does not auto-cleanup between tests.** Without explicit `cleanup()` in an `afterEach`, a second `render()` in the same file will produce duplicate elements and `getByTestId` will throw "Found multiple elements." Fix: `vitest.setup.ts` calls `cleanup()` in `afterEach`. Do not remove that.
+- **`@testing-library/jest-dom` matchers need to be in tsconfig `types`.** Without `"types": ["@testing-library/jest-dom"]` in `packages/kit/tsconfig.json`, `tsc --noEmit` fails on `toBeInTheDocument`/`toHaveClass` even though the matchers work at runtime. The runtime import in `vitest.setup.ts` is not enough on its own.
 
-When something burns a session (a wrong tool call, a silent failure, a non-obvious config trap, a git mistake), record it here in one or two lines. Be specific: name the file, the command, or the symptom. The Headless `CLAUDE.md` builds reliability this way; this section exists so Horizon can do the same intentionally rather than accidentally.
+When something else burns a session (a wrong tool call, a silent failure, a non-obvious config trap, a git mistake), record it here in one or two lines. Be specific: name the file, the command, or the symptom.
 
 ## Git Discipline
 
