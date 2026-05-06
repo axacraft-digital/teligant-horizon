@@ -26,92 +26,116 @@ Until a decision is marked DECIDED, downstream code should not depend on it.
 
 | # | Decision | Status | Resolution |
 |---|----------|--------|------------|
-| D01 | Framework | PENDING | Next.js remains likely, but must be re-ratified for Horizon's new role |
-| D02 | Repo shape | RECOMMENDED | Monorepo with `/packages/kit` and `/apps/reference` |
-| D03 | Styling model | RECOMMENDED | Lattice tokens as CSS custom properties; implementation choice pending scaffold |
-| D04 | Customer instantiation mechanism | PENDING | Package-consumer vs starter-template vs hybrid must be reset |
+| D01 | Framework | DECIDED | Next.js 16 + React + TypeScript on Node 24 LTS with npm workspaces. Kit primitives runtime-agnostic at the React layer; Next-specific helpers in a separate sub-export. |
+| D02 | Repo shape | DECIDED | Monorepo with `apps/reference` + `packages/kit` exactly as drawn in D02 detail. |
+| D03 | Styling model | DECIDED | Lattice tokens as runtime CSS custom properties + Tailwind v4 with semantic theme bindings. No CSS-in-JS. |
+| D04 | Customer instantiation mechanism | DECIDED | Hybrid: published `packages/kit` consumed as a versioned dependency + starter template seeding the customer app shell. Customer projects own brand, content, deployment, domain. |
 | D05 | Adapter strategy | RECOMMENDED | Hand-authored typed Teligant adapters with real + mock implementations |
-| D06 | Testing strategy | PENDING | Unit, component, visual, adapter, and browser smoke coverage to scope |
+| D06 | Testing strategy | DECIDED | Vitest + React Testing Library + axe + msw-backed adapter contract tests + Playwright e2e. Visual regression deferred to Chapter 4/5. |
 | D07 | Governance model | DECIDED | Lattice = design authority; Headless authority stack = regulated workflow authority; AGENTS/CLAUDE = repo operations |
-| D08 | Deployment model | PENDING | Customer-owned deployment required; default target not locked |
-| D09 | Analytics / consent posture | PENDING | Customer-owned analytics likely; foundation hooks TBD |
-| D10 | Upgrade path | PENDING | Semver package updates vs starter-template migrations TBD |
+| D08 | Deployment model | DECIDED | Vercel default for reference app and starter template; kit boundary deployment-agnostic; customer storefronts deploy to customer-owned infrastructure. |
+| D09 | Analytics / consent posture | PENDING | Deferred deliberately. Due before Chapter 7 (reference storefront) is considered complete. No analytics SDK imports in the kit until decided; no PHI in any analytics payload. |
+| D10 | Upgrade path | PENDING | Deferred deliberately. Due before Chapter 10 (first customer instantiation). Until decided, treat the kit as `0.x` — breaking changes allowed with a migration note. |
 | D11 | Commerce backend source | SUPERSEDED | Horizon does not assume an external commerce backend; customer-side commerce remains customer-owned unless a later authority says otherwise |
-| D12 | Content model | PENDING | Content objects / files / CMS adapter posture TBD |
+| D12 | Content model | PENDING | Deferred deliberately. Due before Chapter 7 reference storefront content is finalized. No CMS adapter or runtime CMS dependency in the kit until decided. |
 
 ---
 
 ## D01 — Framework
 
-**Status:** PENDING
+**Status:** DECIDED
 
-**Likely direction:** Next.js with React and TypeScript, aligned with sibling Teligant projects.
+**Decision:** Next.js 16 + React + TypeScript on Node 24 LTS with npm workspaces.
 
-**Why not decided yet:** The reset changes Horizon's purpose. Before scaffold lands, confirm whether the foundation should optimize for full Next.js apps, a package consumed by Next.js apps, or a starter-template shape that can later support more than one runtime.
+**Locked constraints:**
 
-**Decision due:** Before Chapter 1 scaffold.
+- Node 24 LTS (matches `teligant-headless`).
+- npm workspaces (matches `teligant-headless`).
+- TypeScript-first with narrow explicit types (already in `AGENTS.md` § Coding Preferences).
+- Next.js 16 in `apps/reference` and in any starter template emitted from this foundation.
+- `packages/kit` primitives may use React + TypeScript only. Next-specific helpers (image, link, route helpers, server actions) live in a separate sub-export so a future non-Next surface is not blocked.
+
+**Rationale:** See `docs/chapter-0-lock-in-recommendations.md` § D01. Cross-repo coherence with `teligant-headless` (same runtime, package manager, Next major) reduces context-switching cost for shared contributors and lets typed adapter packages share toolchain. Hybrid runtime-agnostic-at-the-kit-layer + Next-everywhere-else preserves the option to support non-Next consumers later without forcing the choice now.
 
 ---
 
 ## D02 — Repo Shape
 
-**Status:** RECOMMENDED
+**Status:** DECIDED
 
-**Recommended direction:** Monorepo.
+**Decision:** Monorepo with one app and one package to start.
 
 ```txt
 teligant-horizon/
 ├── apps/
-│   └── reference/        # Brand-neutral reference storefront
+│   └── reference/        # Brand-neutral reference storefront (Next.js 16)
 ├── packages/
-│   └── kit/              # Reusable primitives, archetypes, adapters, and types
+│   └── kit/              # Reusable primitives, archetypes, adapters, types, tokens
 ├── docs/
+├── package.json          # npm workspaces root
+├── package-lock.json
+├── tsconfig.base.json
 ├── AGENTS.md
 ├── CLAUDE.md
 └── README.md
 ```
 
-**Reasoning:**
+**Locked constraints:**
 
-- Separates reusable foundation code from one reference consumption.
-- Keeps customer-neutral code out of customer-specific projects.
-- Gives the team a stable internal demo surface.
+- One monorepo root.
+- One `packages/kit` to start. Resist splitting prematurely; promote sub-packages only when there is a real consumer that needs the smaller surface.
+- One `apps/reference` to start. Customer-specific reference content does not live here (per Customer Instantiation Discipline in `AGENTS.md`).
+- An `apps/starter-template/` may be added later under D04's hybrid follow-up; it is not required for Chapter 1 scaffold.
 
-**Decision due:** Before Chapter 1 scaffold.
+**Rationale:** Cross-repo coherence with `teligant-headless` (also a small `apps/*` + `packages/*` monorepo). Separates reusable foundation code from one reference consumption. Keeps customer-neutral code out of customer-specific projects. Gives the team a stable internal demo surface. See `docs/chapter-0-lock-in-recommendations.md` § D02.
 
 ---
 
 ## D03 — Styling Model
 
-**Status:** RECOMMENDED
+**Status:** DECIDED
 
-**Recommended direction:** Lattice tokens as CSS custom properties, consumed by components and utility styles.
+**Decision:** Lattice tokens as runtime CSS custom properties, consumed by **Tailwind v4** utility classes via semantic theme bindings.
 
 **Locked constraints:**
 
 - Lattice owns token semantics.
-- Customer skins override tokens and content, not component internals.
+- Lattice tokens are emitted as CSS custom properties at the document root and (for density / theming) at scoped surfaces.
+- Tailwind v4 `@theme` (or equivalent) maps semantic tokens to Tailwind classes. Components consume semantic Tailwind classes, never raw OKLCH values.
+- Customer skins override CSS variables and content, not component internals.
+- Hardcoded color, spacing, or font-size values are forbidden inside `packages/kit/src/**`. Tokens only. Enforce with a lint rule when scaffold lands.
+- No CSS-in-JS runtime libraries (emotion, styled-components, vanilla-extract). PostCSS + Tailwind only.
 - The foundation must support multiple customer skins without rewriting archetypes.
 
-**Open implementation question:** Tailwind, CSS modules, or a hybrid. The choice should optimize for Lattice expression, performance, and downstream customer ergonomics.
-
-**Decision due:** Before Chapter 1 scaffold and Chapter 2 token implementation.
+**Rationale:** Lattice is built on OKLCH variables and runtime variable logic, which means the styling implementation must express CSS custom properties at runtime. Tailwind v4's CSS-first config consumes CSS variables natively. CSS-in-JS is rejected because it tends to bake values at build time and fights runtime variable swapping (which is how skin override works). CSS Modules alone is rejected because it does not compose well with the dense semantic-token usage that Lattice archetypes require. Cross-repo coherence: `teligant-headless` admin/intake also use Tailwind v4. See `docs/chapter-0-lock-in-recommendations.md` § D03.
 
 ---
 
 ## D04 — Customer Instantiation Mechanism
 
-**Status:** PENDING
+**Status:** DECIDED
 
-**Options:**
+**Decision:** Hybrid — published kit package + starter template.
 
-| Option | Description | Tradeoff |
-|--------|-------------|----------|
-| Package-consumer | Customer repos consume a private package from this repo | Clean upgrade path; requires package API discipline |
-| Starter-template | Customer repos begin by copying a template app | Fast and concrete; upgrades become migration work |
-| Hybrid | Package for core kit + starter template for app composition | More moving pieces; likely best long-term |
+**Shape:**
 
-**Decision due:** Before Chapter 8 customer-instantiation work.
+- **Package side:** `packages/kit` is published privately as a versioned npm package (private scope, e.g. `@teligant/horizon-kit`). Customers consume it as a versioned dependency. Carries primitives, archetypes, adapters, types, tokens, and Lattice expression.
+- **Template side:** A starter template (initially `apps/reference`, later potentially a dedicated `apps/starter-template` or a sibling repo) seeds the customer project's app shell, route composition, deployment config, and content scaffolding. The template depends on the kit package; it does not re-export kit internals.
+- **Customer project layout:** customer-owned repo, customer-owned domain, customer-owned deployment. Customer skin (token overrides + content + imagery + copy) lives in the customer project, not in the foundation.
+
+**Locked constraints:**
+
+- Kit is the sole upgrade surface. Bug fixes and archetype improvements ship through the kit package, not through template re-templating.
+- Template owns app-shell, route layout, deployment config, and content scaffolding only.
+- Customer projects own brand expression, content, copy, imagery, domain, deployment, and analytics. None of that lives in the kit or the template.
+- A customer project is, by construction, a downstream consumer of a specific kit version. Breaking changes follow D10 once D10 is locked.
+
+**Open follow-ups (do not block Chapter 1):**
+
+- Whether the starter template lives in this repo (as `apps/starter-template`) or in a sibling repo. Default: in-repo until there is a real reason to split.
+- Private registry choice for the kit package. Default: npm with a private scope unless infra constraints say otherwise.
+
+**Rationale:** Hybrid resolves the central tension: the kit gets the upgrade-path leverage of a versioned package, and the template gets the first-customer speed of a copy-and-customize starting point. The foundation→customer-project boundary stays clean because customer-specific code never lands in the kit. See `docs/chapter-0-lock-in-recommendations.md` § D04.
 
 ---
 
@@ -143,17 +167,35 @@ teligant-horizon/
 
 ## D06 — Testing Strategy
 
-**Status:** PENDING
+**Status:** DECIDED
 
-**Expected coverage:**
+**Decision:** Five-layer testing stack.
 
-- unit tests for token utilities and adapter serialization
-- component tests for primitives
-- visual regression for archetypes
-- adapter tests for request shape, errors, idempotency, and PHI minimization
-- browser smoke tests against the reference storefront
+| Layer | Tool | Scope |
+|---|---|---|
+| Unit | **Vitest** | token utilities, adapter serialization, helpers, hooks |
+| Component | **Vitest + React Testing Library** | primitives, archetype rendering, prop contracts |
+| Accessibility | **axe-core** (via `@axe-core/playwright` and a Vitest matcher) | primitives + archetype-level a11y assertions |
+| Adapter contract | **Vitest + msw (or equivalent)** | request shape, error envelope, idempotency, PHI minimization, mock-vs-real parity |
+| Browser smoke | **Playwright** | reference storefront flows end-to-end |
 
-**Decision due:** Before Chapter 1 scaffold so CI has meaningful commands.
+**Required commands at scaffold time:**
+
+```bash
+npm run check-types           # tsc across workspaces
+npm run lint                  # ESLint + Prettier check
+npm run test                  # vitest run --passWithNoTests per workspace
+npm run test:e2e              # playwright (skipped in unit CI lane)
+npm run build                 # next build for reference app; no-op for kit unless typegen needed
+```
+
+**Locked constraints:**
+
+- Adapter tests must assert *both* request shape and response handling, including error envelope normalization, idempotency keys where relevant, and PHI minimization (no PHI fields appearing in storefront-rendered surfaces).
+- Mock adapters (per D05) must share their response fixtures with the contract test layer, so mock drift from real Headless surfaces is caught in tests, not in production.
+- Visual regression is **deferred** to Chapter 4/5 (archetype-heavy chapters). It is not scaffold-load-bearing and Playwright snapshots will likely cover most of the value.
+
+**Rationale:** Vitest matches `teligant-headless`. Testing Library is the React-component standard. axe is the lowest-friction a11y net. msw lets adapter tests assert against the documented Headless contract shape without spinning up a real backend. Playwright is the cleanest browser-smoke choice. See `docs/chapter-0-lock-in-recommendations.md` § D06.
 
 ---
 
@@ -177,47 +219,61 @@ teligant-horizon/
 
 ## D08 — Deployment Model
 
-**Status:** PENDING
+**Status:** DECIDED
 
-**Constraint:** Customer storefronts deploy to customer-owned infrastructure and customer-owned domains.
+**Decision:** Vercel as the default deploy target with a deployment-agnostic kit boundary.
 
-**Open questions:**
+**Shape:**
 
-- Default target for reference app.
-- Whether customer deployments are optimized for Vercel or deployment-agnostic.
-- How server-only adapter credentials are configured per customer.
-- Whether self-hosting support is required.
+- The reference app and the starter template default to Vercel deployment. CI examples and runbooks target Vercel first.
+- The kit package itself imports nothing Vercel-specific. Server-only adapter helpers use Web standard APIs (Request/Response, fetch) that work on Vercel, Cloudflare Workers, Node servers, and AWS Lambda alike.
+- Customer storefronts deploy to **customer-owned infrastructure**. Vercel is the recommended default; it is not required.
 
-**Decision due:** Before Chapter 1 scaffold.
+**Locked constraints:**
+
+- Reference app: Vercel by default; documented `next build` works without Vercel-only APIs.
+- Kit: no imports from `@vercel/*` or platform-specific runtimes in `packages/kit/src/**`. Enforce with a lint rule when scaffold lands.
+- Server-only credential handling: environment variables only, never browser bundles. Adapter exports a server-only sub-entry that fails fast if imported into a client bundle.
+- Self-hosting support is **not** a Chapter 0 commitment. It is allowed but not required; revisit if a customer requires it.
+
+**Rationale:** `AGENTS.md` non-negotiables require customer-owned deployment. `teligant-headless` runs on Vercel Fluid Compute, so a Vercel-default Horizon keeps cross-repo operational knowledge aligned. Locking deployment-agnostic at the *kit* boundary preserves the option for a customer with platform constraints (regulated hosting, in-house Kubernetes, Cloudflare Workers) without forking the foundation. See `docs/chapter-0-lock-in-recommendations.md` § D08.
 
 ---
 
 ## D09 — Analytics / Consent Posture
 
-**Status:** PENDING
+**Status:** PENDING (deferred deliberately)
 
-**Open questions:**
+**Decision due:** Before Chapter 7 (reference storefront) is considered complete.
+
+**Why deferred:** No scaffold code depends on this. Chapter 7 will reveal whether typed analytics hooks, a consent-banner primitive, or staying out of analytics entirely is the right posture for customer projects.
+
+**Provisional guardrail until decided:** No analytics SDK imports in the kit. No PHI in any future analytics payload (already in `AGENTS.md`).
+
+**Open questions to resolve at decision time:**
 
 - Does Horizon provide typed analytics hooks or stay out of analytics entirely?
 - Does Horizon include consent-banner primitives?
 - How do customer-owned analytics avoid PHI leakage?
 - Which events are safe for storefront analytics versus regulated audit?
 
-**Decision due:** Before the reference storefront is considered complete.
-
 ---
 
 ## D10 — Upgrade Path
 
-**Status:** PENDING
+**Status:** PENDING (deferred deliberately)
 
-**Open questions:**
+**Decision due:** Before Chapter 10 (first customer instantiation).
 
-- If package-consumer: semver policy, private registry, migration docs.
-- If starter-template: migration cadence and support policy.
-- If hybrid: what belongs in the package versus the starter app.
+**Why deferred:** Chapters 1 through 6 will land on a fast-iteration foundation where breaking changes are expected. Locking semver discipline before there is a stable kit surface area would be premature.
 
-**Decision due:** Before first customer instantiation.
+**Provisional guardrail until decided:** Treat the kit as `0.x` — breaking changes allowed with a migration note in CHANGELOG. When D04's hybrid template work begins, that is the trigger to lock D10.
+
+**Open questions to resolve at decision time** (D04 is now `DECIDED` as hybrid, so the relevant subset is):
+
+- Semver policy for the kit package and migration-doc cadence.
+- Starter-template migration cadence and support policy.
+- What belongs in the package versus the starter template (refined from real Chapter 1–6 experience).
 
 ---
 
@@ -240,28 +296,30 @@ The storefront foundation should support customer-owned commerce / checkout resp
 
 ## D12 — Content Model
 
-**Status:** PENDING
+**Status:** PENDING (deferred deliberately)
 
-**Open questions:**
+**Decision due:** Before Chapter 7 reference storefront content is finalized.
+
+**Why deferred:** The content model interacts with D04 (hybrid) and Chapter 8 (customer skin + content model). Locking it now risks baking in assumptions that customer projects will have to fight. Defer until at least one archetype set has been built and the shape of "content slot" vs "page composition" is concrete from real archetype usage.
+
+**Provisional guardrail until decided:** No CMS adapter or runtime CMS dependency added to the kit.
+
+**Open questions to resolve at decision time:**
 
 - File-based content objects, CMS adapter hooks, or customer-repo-owned content modules?
 - How are page compositions represented?
 - How are customer copy, imagery, legal disclaimers, and product presentation versioned?
 - What content can safely appear in the storefront without drifting into regulated workflow?
 
-**Decision due:** Before Chapter 7 reference storefront content is finalized.
-
 ---
 
 ## What Lands Next
 
-Before application code lands:
+Chapter 0 is gate-open for Chapter 1 (Scaffold + Charter). The Chapter 1 blockers (D01, D02, D03, D04, D06, D08) are all `DECIDED`. Remaining `PENDING` entries (D09, D10, D12) are deferred deliberately and have named due dates that fall after Chapter 1.
 
-1. Ratify D01, D02, D03, D06, and D08 enough to scaffold.
-2. Decide whether D04 starts as package-consumer, starter-template, or hybrid.
-3. Keep D05 scoped to typed Teligant adapters.
-4. Leave D09, D10, and D12 open only if scaffold work does not depend on them.
+D05 (Adapter strategy) remains `RECOMMENDED`. It is not Chapter 1 scaffold-load-bearing, but it should ratify before Chapter 6 begins.
 
 ## Amendment Log
 
 - **2026-05-06** — Reset D11 to SUPERSEDED and removed external commerce-backend assumptions. Reframed Horizon as storefront code foundation for customer-owned custom storefront projects that integrate with `teligant-headless`.
+- **2026-05-06** — Ratified D01, D02, D03, D04, D06, D08 to DECIDED based on `docs/chapter-0-lock-in-recommendations.md`. Chapter 0 is gate-open for Chapter 1. D09, D10, D12 affirmed as deferred-with-named-due-dates. D05 remains RECOMMENDED.
