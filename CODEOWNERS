@@ -1,0 +1,7 @@
+# CODEOWNERS — automatic PR review routing
+#
+# Default owner for everything in this repo. Refine as the foundation
+# grows real surface area (e.g., per-package owners once `packages/kit`
+# and `apps/reference` land in Chapter 1).
+
+* @kellysmith
