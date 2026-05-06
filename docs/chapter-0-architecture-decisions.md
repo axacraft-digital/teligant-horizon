@@ -30,7 +30,7 @@ Until a decision is marked DECIDED, downstream code should not depend on it.
 | D02 | Repo shape | DECIDED | Monorepo with `apps/reference` + `packages/kit` exactly as drawn in D02 detail. |
 | D03 | Styling model | DECIDED | Lattice tokens as runtime CSS custom properties + Tailwind v4 with semantic theme bindings. No CSS-in-JS. |
 | D04 | Customer instantiation mechanism | DECIDED | Hybrid: published `packages/kit` consumed as a versioned dependency + starter template seeding the customer app shell. Customer projects own brand, content, deployment, domain. |
-| D05 | Adapter strategy | RECOMMENDED | Hand-authored typed Teligant adapters with real + mock implementations |
+| D05 | Adapter strategy | DECIDED | Hand-authored typed Teligant adapters with real + mock implementations. Posture per capability tracked in `docs/seam/headless-surface-status.md`. |
 | D06 | Testing strategy | DECIDED | Vitest + React Testing Library + axe + msw-backed adapter contract tests + Playwright e2e. Visual regression deferred to Chapter 4/5. |
 | D07 | Governance model | DECIDED | Lattice = design authority; Headless authority stack = regulated workflow authority; AGENTS/CLAUDE = repo operations |
 | D08 | Deployment model | DECIDED | Vercel default for reference app and starter template; kit boundary deployment-agnostic; customer storefronts deploy to customer-owned infrastructure. |
@@ -141,27 +141,29 @@ teligant-horizon/
 
 ## D05 — Adapter Strategy
 
-**Status:** RECOMMENDED
+**Status:** DECIDED
 
-**Recommended direction:** Hand-authored typed adapters to `teligant-headless`.
+**Decision:** Hand-authored typed adapters to `teligant-headless`. Real adapters for shipped Headless surfaces; labeled mock adapters for explicitly planned surfaces when the mock matches the intended v1 contract.
 
-**Adapter rules:**
+**Locked rules:**
 
-- Components do not call `teligant-headless` directly.
-- Secret-bearing calls run server-side.
-- Types reflect authoritative or explicitly planned Headless contracts.
-- Real adapters are used for shipped backend surfaces.
-- Mock adapters are allowed for planned surfaces when clearly labeled and contract-shaped.
+- Components do not call `teligant-headless` directly. All calls go through typed adapters.
+- Secret-bearing calls run server-side. The adapter exports a server-only sub-entry that fails fast if imported into a client bundle (per D08).
+- Adapter types reflect authoritative or explicitly planned Headless contracts. Drift from the Headless contract is a blocking defect per `docs/agents/senior-principal-engineer-office-of-the-cto-agent.md` § Headless Seam Discipline Rule.
+- Mock adapters must be clearly labeled at the call site and in adapter exports. Mock fixtures must be shared with the contract test layer (D06) so mock drift from real Headless surfaces is caught in tests, not in production.
+- Per-capability adapter posture (Real / Mock-only / Not-yet) is tracked in `docs/seam/headless-surface-status.md`. That doc is the source of truth for which adapter shape is allowed today; re-sync when Headless ships a tranche or ratifies an authority doc.
+- Adapters preserve tenant scoping, idempotency-key support where relevant, and PHI minimization (per `AGENTS.md` Adapter Discipline).
 
-**Initial adapter surfaces:**
+**Initial adapter surfaces** (with current posture from `docs/seam/headless-surface-status.md`):
 
-- intake-session creation
-- hosted-intake handoff
-- care-request status lookup where authorized
-- Branch A commerce handoff when packetized
-- payment attestation and capture eligibility when packetized
+- intake-session creation — **Real** (Headless T1 shipped).
+- hosted-intake handoff — **Real**, minimal (Headless T2 shipped; storefront renders the handoff affordance into the hosted runtime URL).
+- care-request status lookup where authorized — **Real**, non-PHI surface only (Headless T3/T3p shipped).
+- Branch A commerce handoff — **Mock-only** until Headless ships the matching runtime tranche; commerce_orchestration authority is ratified.
+- Payment attestation and capture eligibility — **Mock-only** under Branch A; same cut-over rule.
+- Webhook receive helpers — **Real** for inbound webhook patterns (Headless T4 shipped).
 
-**Decision due:** Before Chapter 6.
+**Rationale:** Hand-authored typed adapters are the simplest model that preserves contract clarity, server-only secret handling, and per-capability discipline. Code-generation from an OpenAPI spec was considered and deferred — Headless does not yet publish a stable OpenAPI artifact, and hand-authored adapters give us per-call PHI-minimization control that codegen would not. Revisit if Headless publishes a stable contract artifact.
 
 ---
 
@@ -315,11 +317,10 @@ The storefront foundation should support customer-owned commerce / checkout resp
 
 ## What Lands Next
 
-Chapter 0 is gate-open for Chapter 1 (Scaffold + Charter). The Chapter 1 blockers (D01, D02, D03, D04, D06, D08) are all `DECIDED`. Remaining `PENDING` entries (D09, D10, D12) are deferred deliberately and have named due dates that fall after Chapter 1.
-
-D05 (Adapter strategy) remains `RECOMMENDED`. It is not Chapter 1 scaffold-load-bearing, but it should ratify before Chapter 6 begins.
+Chapter 0 is gate-open for Chapter 1 (Scaffold + Charter) and Chapter 6 (Typed Teligant Adapters). The Chapter 1 blockers (D01, D02, D03, D04, D06, D08) and the Chapter 6 blocker (D05) are all `DECIDED`. Remaining `PENDING` entries (D09, D10, D12) are deferred deliberately and have named due dates that fall after Chapter 1.
 
 ## Amendment Log
 
 - **2026-05-06** — Reset D11 to SUPERSEDED and removed external commerce-backend assumptions. Reframed Horizon as storefront code foundation for customer-owned custom storefront projects that integrate with `teligant-headless`.
-- **2026-05-06** — Ratified D01, D02, D03, D04, D06, D08 to DECIDED based on `docs/chapter-0-lock-in-recommendations.md`. Chapter 0 is gate-open for Chapter 1. D09, D10, D12 affirmed as deferred-with-named-due-dates. D05 remains RECOMMENDED.
+- **2026-05-06** — Ratified D01, D02, D03, D04, D06, D08 to DECIDED based on `docs/chapter-0-lock-in-recommendations.md`. Chapter 0 is gate-open for Chapter 1. D09, D10, D12 affirmed as deferred-with-named-due-dates. D05 remained RECOMMENDED.
+- **2026-05-06** — Ratified D05 to DECIDED. Hand-authored typed adapters with real + mock posture; per-capability posture tracked in `docs/seam/headless-surface-status.md`. Chapter 0 is now also gate-open for Chapter 6.
