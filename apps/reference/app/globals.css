@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 @theme block.
+ *
+ * Chapter 1 wires Tailwind v4 with an empty theme. Chapter 2 (Lattice
+ * Foundations In Code) will populate this with semantic token bindings:
+ *
+ *   @theme {
+ *     --color-surface: var(--lattice-color-surface);
+ *     --color-text-primary: var(--lattice-color-text-primary);
+ *     --spacing-sm: var(--lattice-space-sm);
+ *     ...
+ *   }
+ *
+ * Lattice tokens themselves will be emitted as CSS custom properties at
+ * :root in a separate file imported above this one. Chapter 2 owns that
+ * design; Chapter 1 only proves the build pipeline runs.
+ */
+@theme {
+  /* Empty in Chapter 1. Populated by Chapter 2. */
+}

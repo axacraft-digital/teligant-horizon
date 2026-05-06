@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@teligant/horizon-kit": ["../../packages/kit/src"],
+      "@teligant/horizon-kit/server": ["../../packages/kit/src/server"],
+      "@teligant/horizon-kit/next": ["../../packages/kit/src/next"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

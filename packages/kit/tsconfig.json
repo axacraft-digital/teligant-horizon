@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "types": ["@testing-library/jest-dom"]
+  },
+  "include": ["src/**/*"]
+}
